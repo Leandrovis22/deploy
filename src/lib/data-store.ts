@@ -28,6 +28,7 @@ class DataStore {
       data: {
         ...book,
         createdAt: new Date(),
+        category: undefined, // Ensure category is excluded
       },
     });
     return {
@@ -40,7 +41,10 @@ class DataStore {
   async updateBook(id: string, updates: Partial<Book>): Promise<Book | null> {
     const updated = await prisma.book.update({
       where: { id },
-      data: updates,
+      data: {
+        ...updates,
+        categoryId: updates.categoryId ?? undefined, // Ensure categoryId is explicitly handled
+      },
     });
     // Recalcular availableCopies
     const loans = await prisma.loan.findMany({ where: { bookId: id, status: 'active' } });
