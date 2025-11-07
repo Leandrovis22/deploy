@@ -24,11 +24,11 @@ class DataStore {
 
 
   async addBook(book: Omit<Book, "id" | "createdAt">): Promise<Book> {
+    const { category, availableCopies, ...bookData } = book;
     const created = await prisma.book.create({
       data: {
-        ...book,
+        ...bookData,
         createdAt: new Date(),
-        category: undefined, // Ensure category is excluded
       },
     });
     return {
@@ -39,12 +39,10 @@ class DataStore {
 
 
   async updateBook(id: string, updates: Partial<Book>): Promise<Book | null> {
+    const { category, availableCopies, ...updateData } = updates;
     const updated = await prisma.book.update({
       where: { id },
-      data: {
-        ...updates,
-        categoryId: updates.categoryId ?? undefined, // Ensure categoryId is explicitly handled
-      },
+      data: updateData,
     });
     // Recalcular availableCopies
     const loans = await prisma.loan.findMany({ where: { bookId: id, status: 'active' } });
