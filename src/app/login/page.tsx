@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { apiFetch } from "@/lib/api-client";
 
 export default function LoginPage() {
   useRefreshOnLogin();
@@ -21,7 +20,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await apiFetch("/api/auth", {
+      const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

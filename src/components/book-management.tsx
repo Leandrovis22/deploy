@@ -18,7 +18,6 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Plus, Edit, Trash2, BookOpen, Filter } from "lucide-react"
-import { dataStore } from "@/lib/data-store"
 import { apiFetch } from '@/lib/api-client';
 import type { Book, Category } from "@/lib/types"
 import { toast } from "sonner"
@@ -213,17 +212,21 @@ export function BookManagement({ reloadData }: BookManagementProps) {
   }
 
   const handleAddBook = () => {
-    setAddingBook(true)
     if (!formData.title || !formData.author || !formData.isbn || !formData.categoryId) {
-      toast.error("Por favor complete todos los campos obligatorios")
-      return
+      toast.error("Por favor complete todos los campos obligatorios");
+      setAddingBook(false); // Asegurarse de desbloquear el botón
+      return;
     }
+
     // Comprobación de ISBN único
-    const existingBook = books.find((book) => book.isbn === formData.isbn)
+    const existingBook = books.find((book) => book.isbn === formData.isbn);
     if (existingBook) {
-      toast.error("Ya existe un libro con ese ISBN")
-      return
+      toast.error("Ya existe un libro con ese ISBN");
+      setAddingBook(false); // Asegurarse de desbloquear el botón
+      return;
     }
+
+    setAddingBook(true);
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
@@ -234,13 +237,13 @@ export function BookManagement({ reloadData }: BookManagementProps) {
     })
       .then(res => res.json())
       .then((newBook) => {
-        loadBooks()
-        if (reloadData) reloadData()
-        resetForm()
-        setIsAddDialogOpen(false)
-        toast.success(`"${newBook.title}" ha sido agregado exitosamente`)
+        loadBooks();
+        if (reloadData) reloadData();
+        resetForm();
+        setIsAddDialogOpen(false);
+        toast.success(`"${newBook.title}" ha sido agregado exitosamente`);
       })
-      .finally(() => setAddingBook(false))
+      .finally(() => setAddingBook(false));
   }
 
   const handleEditBook = () => {

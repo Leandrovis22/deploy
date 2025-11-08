@@ -20,7 +20,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Search, Plus, Edit, Trash2, Users, Filter, Mail, Phone, MapPin, Calendar } from "lucide-react"
 import { apiFetch } from '@/lib/api-client';
-// import { dataStore } from "@/lib/data-store"
 import type { User } from "@/lib/types"
 import { getUserIdsWithActiveLoans } from "@/lib/loan-helpers"
 import { useToast } from "@/hooks/use-toast"

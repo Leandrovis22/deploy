@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Search, Plus, Calendar, BookOpen, CheckCircle, AlertTriangle, RotateCcw, DollarSign, Edit, Trash2 } from "lucide-react"
 import { apiFetch } from '@/lib/api-client';
-// import { dataStore } from "@/lib/data-store"
+
 import type { Book, User as UserType, Loan, LoanWithDetails } from "@/lib/types"
 
 interface LoanFormData {
@@ -553,57 +553,145 @@ export function LoanManagement({ reloadData }: LoanManagementProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Libro</TableHead>
-                      <TableHead>Usuario</TableHead>
-                      <TableHead>Fecha de Préstamo</TableHead>
-                      <TableHead>Fecha de Vencimiento</TableHead>
-                      <TableHead>Multa</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLoans.map((loan) => {
-                      const lateFee = calculateLateFee(loan.dueDate);
-                      return (
-                        <TableRow key={loan.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium text-slate-900">{loan.book?.title}</div>
-                              <div className="text-sm text-slate-600">{loan.book?.author}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium text-slate-900">{loan.user?.name}</div>
-                              <div className="text-sm text-slate-600">{loan.user?.email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">{formatDate(loan.loanDate)}</TableCell>
-                          <TableCell className="text-sm">{formatDate(loan.dueDate)}</TableCell>
-                          <TableCell>
-                            {lateFee > 0 ? (
-                              <Badge variant="destructive">${lateFee}</Badge>
-                            ) : (
-                              <span className="text-sm text-slate-600">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(loan)}</TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm" onClick={() => handleReturnBook(loan)}>
-                              Devolver
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              {filteredLoans.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">No se encontraron préstamos</h3>
+                  <p className="text-slate-600">
+                    {searchTerm || statusFilter !== "all"
+                      ? "Intente ajustar los filtros de búsqueda"
+                      : "No hay préstamos registrados en el sistema"}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Libro</TableHead>
+                        <TableHead>Usuario</TableHead>
+                        <TableHead className="hidden md:table-cell">Fecha de Préstamo</TableHead>
+                        <TableHead>Fecha de Vencimiento</TableHead>
+                        <TableHead>Multa</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLoans.map((loan) => {
+                        const lateFee = calculateLateFee(loan.dueDate);
+                        return (
+                          <TableRow key={loan.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium text-slate-900">{loan.book?.title}</div>
+                                <div className="text-sm text-slate-600">{loan.book?.author}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium text-slate-900">{loan.user?.name}</div>
+                                <div className="text-sm text-slate-600">{loan.user?.email}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm hidden md:table-cell">{formatDate(loan.loanDate)}</TableCell>
+                            <TableCell className="text-sm">
+                              {formatDate(loan.dueDate)}
+                              {loan.returnDate && (
+                                <div className="text-xs text-green-600 mt-1">
+                                  Devuelto: {formatDate(loan.returnDate)}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {lateFee > 0 ? (
+                                <div className="flex flex-col gap-1">
+                                  <Badge variant="destructive">${lateFee}</Badge>
+                                  {!loan.lateFeesPaid && loan.status === "returned" && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleMarkFeesPaid(loan.id)}
+                                      className="text-xs h-7"
+                                    >
+                                      <DollarSign className="w-3 h-3 mr-1" />
+                                      Marcar Pagado
+                                    </Button>
+                                  )}
+                                  {loan.lateFeesPaid && (
+                                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                                      Pagado
+                                    </Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-slate-600">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(loan)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                {(loan.status === "active" || loan.status === "overdue") && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleReturnBook(loan)}
+                                    className="flex items-center gap-1 px-2"
+                                    disabled={returningLoanId === loan.id}
+                                  >
+                                    {returningLoanId === loan.id ? (
+                                      <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                      </svg>
+                                    ) : (
+                                      <>
+                                        <RotateCcw className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Devolver</span>
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                                {loan.status === "returned" && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Completado
+                                  </Badge>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditLoan(loan)}
+                                  className="flex items-center gap-1 px-2"
+                                  title="Editar préstamo"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteLoan(loan.id)}
+                                  className="flex items-center gap-1 text-red-600 hover:text-red-700 px-2"
+                                  disabled={deletingLoanId === loan.id}
+                                  title="Eliminar préstamo"
+                                >
+                                  {deletingLoanId === loan.id ? (
+                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

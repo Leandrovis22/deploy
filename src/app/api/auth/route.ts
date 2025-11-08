@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (!SECRET_KEY) {
     return NextResponse.json({ error: 'JWT_SECRET no está definido en las variables de entorno' }, { status: 500 });
   }
-  const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
+  const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, { expiresIn: '2h' });
 
   // No devolver password
   const { password: _, ...userSafe } = user;

@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, Users, FileText, TrendingUp, Calendar, AlertCircle, Menu } from "lucide-react"
-import { dataStore } from "@/lib/data-store"
 import type { Book, User, Loan } from "@/lib/types"
 import { BookManagement } from "@/components/book-management"
 import { LoanManagement } from "@/components/loan-management"
